@@ -1,1 +1,1 @@
-setenv PYTHONPATH /Users/parrish/tests/autogate
+setenv PYTHONPATH /Users/parrish/Code/autogate
