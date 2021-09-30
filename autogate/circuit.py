@@ -1,3 +1,5 @@
+""" This library uses qiskit ordering """
+
 import sympy
 import sortedcontainers
 
@@ -21,6 +23,46 @@ class Gate(object):
         if not isinstance(self.ascii_symbols, list): raise RuntimeError('ascii_symbols must be list')
         if len(self.ascii_symbols) != self.nqubit: raise RuntimeError('len(ascii_symbols) != nqubit')
         if not all(isinstance(_, str) for _ in self.ascii_symbols): raise RuntimeError('ascii_symbols must all be str')
+
+class ControlledGate(object):
+
+    def __init__(
+        self,
+        *,
+        controls,
+        gate,
+        ):
+
+        self.controls = controls
+        self.gate = gate
+
+        if not isinstance(self.controls, list): raise RuntimeError('controls must be list')
+        if not all(isinstance(_, bool) for _ in self.controls): raise RuntimeError('controls must all be bool')
+
+    @property
+    def nqubit(self):
+        return len(self.controls) + self.gate.nqubit
+
+    @property
+    def operator(self):
+        M = sympy.Matrix.eye(2**self.nqubit)
+
+        predicate = 0
+        for i, v in enumerate(self.controls):
+            predicate += int(v) << i
+
+        O = self.gate.operator
+        for k in range(O.shape[0]):
+            k2 = (k << len(self.controls)) + predicate
+            for l in range(O.shape[1]):
+                l2 = (l << len(self.controls)) + predicate
+                M[k2, l2] = O[k, l]
+
+        return M 
+
+    @property
+    def ascii_symbols(self):
+        return ['@' if _ else 'O' for _ in self.controls] + self.gate.ascii_symbols
         
 class GateLibrary(object):
 
@@ -30,6 +72,98 @@ class GateLibrary(object):
             nqubit=1,
             operator=sympy.Matrix([[1, 0], [0, 1]]),
             ascii_symbols=['I'],
+            )
+        
+    @staticmethod
+    def X():
+        return Gate(
+            nqubit=1,
+            operator=sympy.Matrix([[0, 1], [1, 0]]),
+            ascii_symbols=['X'],
+            )
+        
+    @staticmethod
+    def Y():
+        return Gate(
+            nqubit=1,
+            operator=sympy.Matrix([[0, -1j], [1j, 0]]),
+            ascii_symbols=['Y'],
+            )
+        
+    @staticmethod
+    def Z():
+        return Gate(
+            nqubit=1,
+            operator=sympy.Matrix([[1, 0], [0, -1]]),
+            ascii_symbols=['Z'],
+            )
+        
+    @staticmethod
+    def H():
+        return Gate(
+            nqubit=1,
+            operator=sympy.Matrix([[1, 1], [1, -1]]) / sympy.sqrt(2),
+            ascii_symbols=['H'],
+            )
+
+    @staticmethod
+    def oX():
+        return ControlledGate(controls=[False], gate=GateLibrary.X())
+
+    @staticmethod
+    def oY():
+        return ControlledGate(controls=[False], gate=GateLibrary.Y())
+
+    @staticmethod
+    def oZ():
+        return ControlledGate(controls=[False], gate=GateLibrary.Z())
+
+    @staticmethod
+    def oH():
+        return ControlledGate(controls=[False], gate=GateLibrary.H())
+
+    @staticmethod
+    def cX():
+        return ControlledGate(controls=[True], gate=GateLibrary.X())
+
+    @staticmethod
+    def cY():
+        return ControlledGate(controls=[True], gate=GateLibrary.Y())
+
+    @staticmethod
+    def cZ():
+        return ControlledGate(controls=[True], gate=GateLibrary.Z())
+
+    @staticmethod
+    def cH():
+        return ControlledGate(controls=[True], gate=GateLibrary.H())
+
+    @staticmethod
+    def Ry(
+        t=sympy.Symbol('t', real=True),
+        ):
+
+        return Gate(
+            nqubit=1,
+            operator=sympy.Matrix([[sympy.cos(t), -sympy.sin(t)], [+sympy.sin(t), sympy.cos(t)]]),
+            ascii_symbols=['Ry'],
+            )
+
+    @staticmethod
+    def G(
+        t=sympy.Symbol('t', real=True),
+        ):
+
+        M = sympy.Matrix.eye(4)
+        M[1, 1] = +sympy.cos(t)
+        M[1, 2] = -sympy.sin(t)
+        M[2, 1] = +sympy.sin(t)
+        M[2, 2] = +sympy.cos(t)
+
+        return Gate(
+            nqubit=2,
+            operator=M,
+            ascii_symbols=['G0', 'G1'],
             )
         
 class Circuit(object): 
@@ -364,3 +498,28 @@ class Circuit(object):
         
         return ascii_str
 
+    # => Operator Machinery <= #
+
+    @property
+    def operator(self):
+        U = sympy.Matrix.eye(2**self.nqubit)
+        for (time, qubits), gate in self.gates.items():
+            U2 = sympy.Matrix.zeros(*(2**self.nqubit,)*2)
+            oubits = [_ for _ in range(self.nqubit) if not _ in qubits]
+            O = gate.operator
+            for k1 in range(2**len(oubits)):
+                k2 = 0
+                for o1, o2 in enumerate(oubits):
+                    k2 += ((k1 & (1 << o1)) >> o1) << o2
+                for l1 in range(2**len(qubits)):
+                    l2 = 0
+                    for q1, q2 in enumerate(qubits):
+                        l2 += ((l1 & (1 << q1)) >> q1) << q2
+                    for m1 in range(2**len(qubits)):
+                        m2 = 0
+                        for q1, q2 in enumerate(qubits):
+                            m2 += ((m1 & (1 << q1)) >> q1) << q2
+                        U2[k2 + l2, k2 + m2] = O[l1, m1]
+            U = sympy.Matrix(U2 * U)
+            U = sympy.simplify(sympy.expand(U))
+        return U
