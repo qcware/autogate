@@ -1,4 +1,5 @@
 #include "trig.hpp"
+#include "trig_tensor.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
@@ -43,6 +44,10 @@ py::class_<TrigPolynomial>(m, "TrigPolynomial")
 .def_static("sin", &TrigPolynomial::sin, "symbol"_a, "order"_a=1)
 ;
 
+py::class_<TrigTensor>(m, "TrigTensor")
+.def(py::init<const std::vector<size_t>&>(), "shape"_a)
+.def_property("shape", &TrigTensor::shape, nullptr)
+;
 
 }
 

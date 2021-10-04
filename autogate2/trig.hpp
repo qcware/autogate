@@ -96,10 +96,12 @@ TrigPolynomial(
     polynomial_(polynomial)
     {}
 
+TrigPolynomial(){}
+
 const std::map<TrigMonomial, std::complex<double>>& polynomial() const { return polynomial_; }
 
 static 
-TrigPolynomial zero() { return TrigPolynomial({}); }
+TrigPolynomial zero() { return TrigPolynomial(); }
 
 static 
 TrigPolynomial one() { return TrigPolynomial({{ TrigMonomial::one(), 1.0}}); }
