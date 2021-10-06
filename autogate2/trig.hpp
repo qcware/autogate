@@ -217,6 +217,24 @@ friend TrigPolynomial operator-(const TrigPolynomial& poly, const std::complex<d
 {
     return poly + (-scal);
 }
+    
+// TODO: Make this math library look exactly like TrigTensor
+    
+TrigPolynomial conj() const;
+    
+static
+bool equivalent_keys(const TrigPolynomial& a, const TrigPolynomial& b);
+    
+// Throw if not equivalent_keys
+static
+bool equivalent_values(const TrigPolynomial& a, const TrigPolynomial& b, double cutoff=1.0E-12);
+    
+static
+bool equivalent(const TrigPolynomial& a, const TrigPolynomial& b, double cutoff=1.0E-12)
+{
+    if (!equivalent_keys(a, b)) return false;
+    return equivalent_values(a, b);
+}
 
 static
 TrigPolynomial cos(char symbol, int order=1)
