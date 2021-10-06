@@ -222,6 +222,9 @@ friend TrigPolynomial operator-(const TrigPolynomial& poly, const std::complex<d
     
 TrigPolynomial conj() const;
     
+// Retain if |value| > cutoff (always discards exact zeros)
+TrigPolynomial sieved(double cutoff=1.0E-12) const;
+    
 static
 bool equivalent_keys(const TrigPolynomial& a, const TrigPolynomial& b);
     
