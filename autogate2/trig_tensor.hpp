@@ -17,32 +17,153 @@ TrigTensor(const std::vector<size_t>& shape) :
 }
 
 const std::vector<size_t>& shape() const { return shape_; }
+const size_t size() const { return size_; }
 
 std::vector<TrigPolynomial>& data() { return data_; }
-// TODO expose size to user
+const std::vector<TrigPolynomial>& data() const { return data_; }
 // TODO vector of strides
     
-// => Math Functions <= //
-    
-TrigTensor operator+() const;
-TrigTensor operator-() const;
-    
-TrigTensor& operator+=(const TrigTensor& other);
-TrigTensor& operator-=(const TrigTensor& other);
-friend TrigTensor operator+(const TrigTensor& a, const TrigTensor& b);
-friend TrigTensor operator-(const TrigTensor& a, const TrigTensor& b);
+TrigTensor operator+() const
+{
+    TrigTensor tensor(shape_);
+    std::vector<TrigPolynomial>& data = tensor.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data[index] = +data_[index];
+    }
+    return tensor;
+}
 
-TrigTensor& operator+=(const std::complex<double>& scal);
-TrigTensor& operator-=(const std::complex<double>& scal);
-TrigTensor& operator*=(const std::complex<double>& scal);
-TrigTensor& operator/=(const std::complex<double>& scal);
-friend TrigTensor operator+(const std::complex<double>& scalar, const TrigTensor& tensor);
-friend TrigTensor operator+(const TrigTensor& tensor, const std::complex<double>& scalar);
-friend TrigTensor operator-(const std::complex<double>& scalar, const TrigTensor& tensor);
-friend TrigTensor operator-(const TrigTensor& tensor, const std::complex<double>& scalar);
-friend TrigTensor operator*(const std::complex<double>& scalar, const TrigTensor& tensor);
-friend TrigTensor operator*(const TrigTensor& tensor, const std::complex<double>& scalar);
-friend TrigTensor operator/(const TrigTensor& tensor, const std::complex<double>& scalar);
+TrigTensor operator-() const
+{
+    TrigTensor tensor(shape_);
+    std::vector<TrigPolynomial>& data = tensor.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data[index] = -data_[index];
+    }
+    return tensor;
+}
+
+TrigTensor& operator+=(const TrigTensor& other)
+{
+    if (shape_ != other.shape()) throw std::runtime_error("Tensors are not the same shape");
+
+    const std::vector<TrigPolynomial>& data = other.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data_[index] += data[index];
+    }
+    return *this;
+}
+
+TrigTensor& operator-=(const TrigTensor& other)
+{
+    if (shape_ != other.shape()) throw std::runtime_error("Tensors are not the same shape");
+
+    const std::vector<TrigPolynomial>& data = other.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data_[index] -= data[index];
+    }
+    return *this;
+}
+
+friend TrigTensor operator+(const TrigTensor& a, const TrigTensor& b)
+{
+    TrigTensor tensor = a;
+    tensor += b;
+    return tensor;
+}
+
+friend TrigTensor operator-(const TrigTensor& a, const TrigTensor& b)
+{
+    TrigTensor tensor = a;
+    tensor -= b;
+    return tensor;
+}
+
+friend TrigTensor operator*(const TrigTensor& a, const TrigTensor& b)
+{
+    if (a.shape() != b.shape()) throw std::runtime_error("Tensors are not the same shape");
+
+    TrigTensor tensor(a.shape());
+    std::vector<TrigPolynomial>& data = tensor.data();
+    const std::vector<TrigPolynomial>& adata = a.data();
+    const std::vector<TrigPolynomial>& bdata = b.data();
+    for (size_t index = 0; index< adata.size(); index++) {
+       data[index] = adata[index] * bdata[index]; 
+    }
+    return tensor;
+}
+
+TrigTensor operator*(const std::complex<double>& scalar) const
+{
+    TrigTensor tensor(shape_);
+    std::vector<TrigPolynomial>& data = tensor.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data[index] = data_[index] * scalar;
+    }
+    return tensor;
+}
+
+friend TrigTensor operator*(const std::complex<double>& scalar, const TrigTensor& tensor)
+{
+    return tensor * scalar;
+}
+
+TrigTensor operator/(const std::complex<double>& scalar) const
+{
+    TrigTensor tensor(shape_);
+    std::vector<TrigPolynomial>& data = tensor.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data[index] = data_[index] / scalar;
+    }
+    return tensor;
+}
+
+TrigTensor operator+=(const std::complex<double>& scalar)
+{
+    TrigTensor tensor(shape_);
+    std::vector<TrigPolynomial>& data = tensor.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data[index] += data_[index];
+    }
+    return tensor;
+}
+
+friend TrigTensor operator+(const TrigTensor& a, const std::complex<double>& scalar)
+{
+    TrigTensor tensor = a;
+    tensor += scalar;
+    return tensor;
+}
+
+friend TrigTensor operator+(const std::complex<double>& scalar, const TrigTensor& a)
+{
+    TrigTensor tensor = a;
+    tensor += scalar;
+    return tensor;
+}
+
+TrigTensor operator-=(const std::complex<double>& scalar)
+{
+    TrigTensor tensor(shape_);
+    std::vector<TrigPolynomial>& data = tensor.data();
+    for (size_t index = 0; index < data.size(); index++) {
+        data[index] -= data_[index];
+    }
+    return tensor;
+}
+
+friend TrigTensor operator-(const std::complex<double>& scalar, const TrigTensor& tensor)
+{
+    return -tensor + scalar;
+}
+
+friend TrigTensor operator-(const TrigTensor& tensor, const std::complex<double>& scalar)
+{
+    return tensor + (-scalar);
+}
+
+TrigTensor& operator*=(const std::complex<double>& scalar);
+TrigTensor& operator/=(const std::complex<double>& scalar);
     
 TrigTensor conj() const;
 TrigTensor T() const;

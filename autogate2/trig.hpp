@@ -169,69 +169,121 @@ friend TrigPolynomial operator*(const TrigPolynomial& a, const TrigPolynomial& b
     return TrigPolynomial(polynomial);
 }
 
-TrigPolynomial operator*(const std::complex<double>& scal) const 
+TrigPolynomial operator*(const std::complex<double>& scalar) const 
 { 
     std::map<TrigMonomial, std::complex<double>> polynomial;
     for (auto const& it : polynomial_) {
         const TrigMonomial& monomial = it.first;
         const std::complex<double>& coefficient = it.second;
-        polynomial[monomial] = coefficient * scal;
+        polynomial[monomial] = coefficient * scalar;
     }
     return TrigPolynomial(polynomial);
 }
 
-friend TrigPolynomial operator*(const std::complex<double>& scal, const TrigPolynomial& poly)
+friend TrigPolynomial operator*(const std::complex<double>& scalar, const TrigPolynomial& poly)
 {
-    return poly * scal;
+    return poly * scalar;
 }
 
-TrigPolynomial operator/(const std::complex<double>& scal) const 
+TrigPolynomial operator/(const std::complex<double>& scalar) const 
 { 
     std::map<TrigMonomial, std::complex<double>> polynomial;
     for (auto const& it : polynomial_) {
         const TrigMonomial& monomial = it.first;
         const std::complex<double>& coefficient = it.second;
-        polynomial[monomial] = coefficient / scal;
+        polynomial[monomial] = coefficient / scalar;
     }
     return TrigPolynomial(polynomial);
 }
 
-TrigPolynomial operator+(const std::complex<double>& scal) const
+TrigPolynomial operator+=(const std::complex<double>& scalar)
 {
     std::map<TrigMonomial, std::complex<double>> polynomial = polynomial_;
-    polynomial[TrigMonomial::one()] += scal;
+    for (auto const& it : polynomial_) {
+        polynomial[it.first] = it.second + scalar;
+    }
     return TrigPolynomial(polynomial);
 }
 
-friend TrigPolynomial operator+(const std::complex<double>& scal, const TrigPolynomial& poly) 
+TrigPolynomial operator+(const std::complex<double>& scalar) const
 {
-    return poly + scal;
+    std::map<TrigMonomial, std::complex<double>> polynomial = polynomial_;
+    polynomial[TrigMonomial::one()] += scalar;
+    return TrigPolynomial(polynomial);
 }
 
-friend TrigPolynomial operator-(const std::complex<double>& scal, const TrigPolynomial& poly) 
+friend TrigPolynomial operator+(const std::complex<double>& scalar, const TrigPolynomial& poly) 
 {
-    return -poly + scal;
+    std::map<TrigMonomial, std::complex<double>> polynomial = poly.polynomial();
+    polynomial[TrigMonomial::one()] += scalar;
+    return TrigPolynomial(polynomial);
 }
 
-friend TrigPolynomial operator-(const TrigPolynomial& poly, const std::complex<double>& scal) 
+TrigPolynomial operator-=(const std::complex<double>& scalar)
 {
-    return poly + (-scal);
+    std::map<TrigMonomial, std::complex<double>> polynomial = polynomial_;
+    for (auto const& it : polynomial_) {
+        polynomial[it.first] = it.second - scalar;
+    }
+    return TrigPolynomial(polynomial);
+}
+
+friend TrigPolynomial operator-(const TrigPolynomial& poly, const std::complex<double>& scalar) 
+{
+    return poly + (-scalar);
 }
     
-// TODO: Make this math library look exactly like TrigTensor
+friend TrigPolynomial operator-(const std::complex<double>& scalar, const TrigPolynomial& poly) 
+{
+    return -poly + scalar;
+}
+
+TrigPolynomial conj() const
+{
+    std::map<TrigMonomial, std::complex<double>> polynomial;
+    for (auto it : polynomial_) {
+        polynomial[it.first] = std::conj(it.second);
+    }
+    return TrigPolynomial(polynomial);
+}
     
-TrigPolynomial conj() const;
-    
-// Retain if |value| > cutoff (always discards exact zeros)
-TrigPolynomial sieved(double cutoff=1.0E-12) const;
+TrigPolynomial sieved(double cutoff=1.0E-12) const
+{
+    std::map<TrigMonomial, std::complex<double>> polynomial;
+    for (auto it : polynomial_) {
+        if (std::abs(it.second) > cutoff) {
+            polynomial[it.first] = it.second;
+        }
+    }
+    return TrigPolynomial(polynomial);
+}
     
 static
-bool equivalent_keys(const TrigPolynomial& a, const TrigPolynomial& b);
+bool equivalent_keys(const TrigPolynomial& a, const TrigPolynomial& b)
+{
+    if (a.polynomial().size() != b.polynomial().size()) return false; 
+
+    std::map<TrigMonomial, std::complex<double>> triga = a.polynomial();
+    std::map<TrigMonomial, std::complex<double>> trigb = b.polynomial();
+    for (auto itera = triga.begin(), iterb = trigb.begin(); itera != triga.end(); ++itera, ++iterb) {
+        if (itera->first != iterb->first) return false;
+    }
+    return true;
+}
     
-// Throw if not equivalent_keys
 static
-bool equivalent_values(const TrigPolynomial& a, const TrigPolynomial& b, double cutoff=1.0E-12);
-    
+bool equivalent_values(const TrigPolynomial& a, const TrigPolynomial& b, double cutoff=1.0E-12)
+{
+    if (!equivalent_keys(a, b)) throw std::runtime_error("Keys must be equivalent");
+
+    std::map<TrigMonomial, std::complex<double>> triga = a.polynomial();
+    std::map<TrigMonomial, std::complex<double>> trigb = b.polynomial();
+    for (auto itera = triga.begin(), iterb = trigb.begin(); itera != triga.end(); ++itera, ++iterb) {
+        if (std::abs(itera->second - iterb->second) > cutoff) return false;
+    }
+    return true;
+}
+
 static
 bool equivalent(const TrigPolynomial& a, const TrigPolynomial& b, double cutoff=1.0E-12)
 {
