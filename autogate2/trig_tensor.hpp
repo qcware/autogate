@@ -6,6 +6,8 @@ class TrigTensor {
 
 public:
 
+TrigTensor() {}
+
 TrigTensor(const std::vector<size_t>& shape) :
     shape_(shape)
 {
