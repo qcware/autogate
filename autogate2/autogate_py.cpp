@@ -124,6 +124,7 @@ py::class_<Circuit>(m, "Circuit")
 .def_property("nqubit", &Circuit::nqubit, nullptr)
 .def_property("ntime", &Circuit::ntime, nullptr)
 .def("add_gate", &Circuit::add_gate, "time"_a, "qubits"_a, "gate"_a)
+.def("matrix", &Circuit::matrix)
 ;
 
 }

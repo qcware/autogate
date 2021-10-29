@@ -32,7 +32,7 @@ void add_gate(
     if (qubitset.size() != qubits.size()) throw std::runtime_error("Repeated qubit indices");
 
     for (auto qubit : qubits) {
-        std::pair<size_t, size_t> qindex(qubit,time);
+        std::pair<size_t, size_t> qindex(time, qubit);
         if (times_and_qubits_.find(qindex) != times_and_qubits_.end()) {
             throw std::runtime_error("Time and qubit indices already occupied");
         }
@@ -49,9 +49,13 @@ void add_gate(
 
 TrigTensor matrix() const// ;  TODO
 {
-    const int nqubit = qubits_.size();
-    const std::vector<size_t> dim = {1ULL<<nqubit, 1ULL<<nqubit};
-    TrigTensor mat(dim);
+    uint32_t nqubit = qubits_.size();
+    size_t dim = 1ULL<<nqubit;
+    std::vector<size_t> shape = {dim, dim};
+    TrigTensor mat(shape);
+    for (size_t index = 0; index < dim; index++) {
+        mat.data()[index*dim + index] = TrigPolynomial::one();
+    }
 
     return mat;
 }
@@ -59,7 +63,6 @@ TrigTensor matrix() const// ;  TODO
 private:
 
 std::map<circuit_key_t, Gate> gates_;
-
 std::set<size_t> qubits_;
 std::set<size_t> times_;
 std::set<std::pair<size_t, size_t>> times_and_qubits_;
