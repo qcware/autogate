@@ -109,15 +109,15 @@ Gate H()
 }
 
 static
-Gate Ry(char symbol)
+Gate Ry(char symbol, int order=1)
 {
     uint32_t nqubit = 1;
     std::vector<size_t> dim = {(1ULL<<nqubit), (1ULL<<nqubit)};
     TrigTensor matrix(dim);
-    matrix.data()[0*2+0] = +TrigPolynomial::cos(symbol);
-    matrix.data()[0*2+1] = -TrigPolynomial::sin(symbol);
-    matrix.data()[1*2+0] = +TrigPolynomial::sin(symbol);
-    matrix.data()[1*2+1] = +TrigPolynomial::cos(symbol);
+    matrix.data()[0*2+0] = +TrigPolynomial::cos(symbol, order);
+    matrix.data()[0*2+1] = -TrigPolynomial::sin(symbol, order);
+    matrix.data()[1*2+0] = +TrigPolynomial::sin(symbol, order);
+    matrix.data()[1*2+1] = +TrigPolynomial::cos(symbol, order);
     std::vector<std::string> ascii_symbols = {"Ry"};
 
     return Gate(nqubit, matrix, ascii_symbols);
@@ -250,16 +250,33 @@ Gate cH()
 }
 
 static
-Gate G(char symbol)
+Gate cRy(char symbol, int order=1)
 {
     uint32_t nqubit = 2;
     std::vector<size_t> dim = {(1ULL<<nqubit), (1ULL<<nqubit)};
     TrigTensor matrix(dim);
     matrix.data()[0*4+0] = +TrigPolynomial::one();
-    matrix.data()[1*4+1] = +TrigPolynomial::cos(symbol);
-    matrix.data()[1*4+2] = -TrigPolynomial::sin(symbol);
-    matrix.data()[2*4+1] = +TrigPolynomial::sin(symbol);
-    matrix.data()[2*4+2] = +TrigPolynomial::cos(symbol);
+    matrix.data()[1*4+1] = +TrigPolynomial::cos(symbol, order);
+    matrix.data()[1*4+3] = -TrigPolynomial::sin(symbol, order);
+    matrix.data()[2*4+2] = +TrigPolynomial::one();
+    matrix.data()[3*4+1] = +TrigPolynomial::sin(symbol, order);
+    matrix.data()[3*4+3] = +TrigPolynomial::cos(symbol, order);
+    std::vector<std::string> ascii_symbols = {"@","Ry"};
+
+    return Gate(nqubit, matrix, ascii_symbols);
+}
+
+static
+Gate G(char symbol, int order=1)
+{
+    uint32_t nqubit = 2;
+    std::vector<size_t> dim = {(1ULL<<nqubit), (1ULL<<nqubit)};
+    TrigTensor matrix(dim);
+    matrix.data()[0*4+0] = +TrigPolynomial::one();
+    matrix.data()[1*4+1] = +TrigPolynomial::cos(symbol, order);
+    matrix.data()[1*4+2] = -TrigPolynomial::sin(symbol, order);
+    matrix.data()[2*4+1] = +TrigPolynomial::sin(symbol, order);
+    matrix.data()[2*4+2] = +TrigPolynomial::cos(symbol, order);
     matrix.data()[3*4+3] = +TrigPolynomial::one();
     std::vector<std::string> ascii_symbols = {"G0","G1"};
 
