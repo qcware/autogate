@@ -86,6 +86,7 @@ py::class_<TrigTensor>(m, "TrigTensor")
 .def(py::self -= std::complex<double>())
 .def(py::self - std::complex<double>())
 .def(std::complex<double>() - py::self)
+.def_static("gemm", &TrigTensor::gemm, "a"_a, "b"_a)
 ;
 
 py::class_<Gate>(m, "Gate")

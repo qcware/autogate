@@ -89,11 +89,11 @@ TrigTensor matrix() const
                         size_t r2 = gate.first.second[r1];
                         m2 += ((m1 & (1 << r1)) >> r1) << r2;
                     }
-                    mat2.data()[(k2 + l2) * dim + k2 + m2] = gate_op.data()[l1 * gate_dim + m1];
+                    mat2.data()[(k2 + l2) * dim + (k2 + m2)] = gate_op.data()[l1 * gate_dim + m1];
                 }
             }
         }
-        mat = mat2 * mat;
+        mat = TrigTensor::gemm(mat2,mat);
     }
     return mat;
 }
